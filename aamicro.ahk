@@ -325,65 +325,6 @@ ExitFunc(*)
         }
     }
 
-    ; Kill node process and close sub-scripts when app closes
-    try {
-        ; Kill extension-server.js
-        psScript := 'Get-CimInstance Win32_Process | Where-Object { $_.Name -eq "node.exe" -and $_.CommandLine -like "*extension-server.js*" } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }'
-        RunWait('powershell -NoProfile -Command "' psScript '"', , "Hide")
-    }
-    ; Close all sub-scripts
-    CloseSubScripts()
-}
-
-GuiDrag(wParam, lParam, msg, hwnd)
-{
-    if (hwnd = SessionGui.Hwnd)
-    {
-        PostMessage(0xA1, 2, , , "ahk_id " hwnd)
-    }
-}
-
-LoadBidClickMapV2()
-LoadF8LadderConfig()  ; Load F8 ladder configuration from AuctionSessions.ini
-InitSessionWindow()
-LaunchDomHelperLauncher()
-StartExtensionMonitoring()  ; Start continuous OCR by default
-SetTimer(CheckButton, 300)
-SetTimer(WatchTargetTab, 500)
-SetTimer(PollActiveLotState, 250)
-SetTimer(TryAutoEnableF11FromBE, 250)
-SetTimer(TryAutoEnableF10FromFinal, 250)
-SetTimer(() => UpdateSessionClock(), 1000)  ; Try function reference syntax
-; SetTimer(UpdateNextF8Display, 1000)  ; Disabled - replaced with timer
-UpdateSessionClock()  ; Initial clock update
-
-; --- CHECK FOR RELOAD RESUME STATE ---
-stateFile := A_Temp "\bidhelper_reload_resume.ini"
-if FileExist(stateFile)
-{
-    try
-    {
-        resumeState := Trim(FileRead(stateFile))
-        FileDelete(stateFile)
-        
-        if RegExMatch(resumeState, "PressCount=(\d+)", &reloadMatch)
-        {
-            global pressCount := reloadMatch[1] + 0
-            reloadStateRestored := true
-            UpdateSessionWindow()
-        }
-        
-        if RegExMatch(resumeState, "PacingTarget=(\d+)", &reloadMatch)
-        {
-            global pacingTargetAbsoluteLotMark := reloadMatch[1] + 0
-            if (pacingTargetAbsoluteLotMark > 0 && IsObject(PacingLotsInput))
-            {
-                global pacingLotAutoUpdating := true
-                global pacingLotAutoValue := pacingTargetAbsoluteLotMark . ""
-                global pacingLotManualOverride := false
-                PacingLotsInput.Value := pacingLotAutoValue
-                pacingLotAutoUpdating := false
-            }
         }
 
         if RegExMatch(resumeState, "LastPacingTarget=(\d+)", &reloadMatch)
